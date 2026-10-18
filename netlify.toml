@@ -1,0 +1,17 @@
+# Static site: build the library locally with `npm run data`, then `npm run build`.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Semi-public: keep every file out of search engines, not just the page.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+    Referrer-Policy = "no-referrer"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/atlas/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

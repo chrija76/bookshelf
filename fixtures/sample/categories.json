@@ -1,0 +1,37 @@
+[
+  {
+    "slug": "company-building",
+    "name": "Company Building",
+    "description": "Startups, management and the craft of building companies."
+  },
+  {
+    "slug": "lives-and-founders",
+    "name": "Lives & Founders",
+    "description": "Biographies and memoirs of people who built things."
+  },
+  {
+    "slug": "mind-and-behaviour",
+    "name": "Mind & Behaviour",
+    "description": "Psychology, decision-making and habits."
+  },
+  {
+    "slug": "money-and-markets",
+    "name": "Money & Markets",
+    "description": "Investing, finance and venture capital."
+  },
+  {
+    "slug": "big-history",
+    "name": "Big History",
+    "description": "Civilisations, empires and the long arc of the past."
+  },
+  {
+    "slug": "science-and-future",
+    "name": "Science & Future",
+    "description": "Biology, AI, physics and where it is all going."
+  },
+  {
+    "slug": "fiction",
+    "name": "Fiction",
+    "description": "Novels, from Kafka to hard science fiction."
+  }
+]

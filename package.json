@@ -1,0 +1,61 @@
+{
+  "name": "bookshelf",
+  "version": "1.0.0",
+  "description": "Your Goodreads library as a 3D room in the browser.",
+  "scripts": {
+    "test": "vitest run",
+    "data": "tsx pipeline/index.ts",
+    "data:sample": "BOOKSHELF_DATA=fixtures/sample tsx pipeline/index.ts",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@react-spring/three": "^10.1.2",
+    "@react-spring/web": "^10.1.2",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
+    "@react-three/postprocessing": "^3.2.0",
+    "postprocessing": "^6.39.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "^0.186.1",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.134.0",
+    "@fontsource/barlow-condensed": "^5.3.0",
+    "@fontsource/eb-garamond": "^5.3.0",
+    "@fontsource/inter-tight": "^5.3.0",
+    "@fontsource/jost": "^5.3.0",
+    "@fontsource/libre-caslon-text": "^5.3.0",
+    "@napi-rs/canvas": "^1.0.11",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "csv-parse": "^7.0.3",
+    "dotenv": "^18.0.8",
+    "ktx2-encoder": "^0.6.0",
+    "node-vibrant": "^4.0.4",
+    "p-limit": "^7.3.3",
+    "playwright": "^1.64.1",
+    "sharp": "^0.35.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^4.1.11",
+    "zod": "^4.6.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chrija76/bookshelf.git"
+  }
+}
