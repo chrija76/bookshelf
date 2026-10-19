@@ -341,14 +341,13 @@ function spotFor(p: Layout['placements'][number], c: CaseSpec) {
     length,
     radius: Math.min(p.book.dims.w * 0.4, 18 + length * 0.75),
   };
-  return { top, spot, beam, headY };
+  return { top, spot, beam };
 }
 
 /**
  * Display lighting for the covers view: a slim aluminium LED profile under the front of every
  * shelf with its wash on the back panel, and for each five-star book a small spot in the shelf
- * above. Its beam runs from the spot to the head of the cover, with a soft spill on the panel
- * behind. The light on the books themselves is in their shader.
+ * above. Its beam runs from the spot to the head of the cover. The light on the books themselves is in their shader.
  */
 function ShelfLighting({ layout, mats }: { layout: Layout; mats: Mats }) {
   const c = layout.bookcase;
@@ -358,7 +357,7 @@ function ShelfLighting({ layout, mats }: { layout: Layout; mats: Mats }) {
       led: new THREE.MeshStandardMaterial({ color: '#e9e5de', emissive: '#fff6e8', roughness: 0.6 }),
       spotLed: new THREE.MeshStandardMaterial({ color: '#e9e5de', emissive: '#fff6e8', roughness: 0.6, emissiveIntensity: 0 }),
       wash: new THREE.MeshBasicMaterial({
-        map: lightWashTexture('wash'),
+        map: lightWashTexture(),
         color: WARM,
         transparent: true,
         opacity: 0.2,
@@ -366,14 +365,6 @@ function ShelfLighting({ layout, mats }: { layout: Layout; mats: Mats }) {
         depthWrite: false,
       }),
       beam: beamMaterial(),
-      spill: new THREE.MeshBasicMaterial({
-        map: lightWashTexture('spill'),
-        color: WARM,
-        transparent: true,
-        opacity: 0,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
       puck: new THREE.MeshStandardMaterial({ color: '#2b2824', roughness: 0.45, metalness: 0.6 }),
     }),
     [],
@@ -385,9 +376,8 @@ function ShelfLighting({ layout, mats }: { layout: Layout; mats: Mats }) {
     lm.spotLed.emissiveIntensity = a;
     lm.wash.opacity = 0.2 * (1 - a);
     lm.beam.uniforms.uOpacity!.value = 0.38 * a;
-    lm.spill.opacity = 0.3 * a;
     lm.wash.visible = a < 0.999;
-    lm.beam.visible = lm.spill.visible = a > 0.001;
+    lm.beam.visible = a > 0.001;
   });
   const stars = layout.placements.filter((p) => p.kind === 'face' && p.book.rating === 5 && p.row);
   return (
@@ -413,9 +403,8 @@ function ShelfLighting({ layout, mats }: { layout: Layout; mats: Mats }) {
         );
       })}
       {stars.map((p) => {
-        const { top, spot, beam, headY } = spotFor(p, c);
+        const { top, spot, beam } = spotFor(p, c);
         const x = p.position[0];
-        const w = p.book.dims.w;
         return (
           <group key={p.book.id}>
             <mesh material={lm.puck} position={[x, top - 4, spot.z]}>
@@ -426,10 +415,6 @@ function ShelfLighting({ layout, mats }: { layout: Layout; mats: Mats }) {
             </mesh>
             <mesh material={lm.beam} position={beam.position} quaternion={beam.quaternion}>
               <cylinderGeometry args={[9, beam.radius, beam.length, 40, 1, true]} />
-            </mesh>
-            {/* Light spilling past the book onto the back panel, centred on its head. */}
-            <mesh material={lm.spill} position={[x, headY - 20, 11.5]} scale={[w * 1.5, (top - headY) * 2 + 160, 1]}>
-              <planeGeometry />
             </mesh>
           </group>
         );

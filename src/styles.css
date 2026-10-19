@@ -26,6 +26,8 @@ body { overflow: hidden; -webkit-font-smoothing: antialiased; }
 }
 .chip:hover { background: rgba(43, 38, 32, 0.07); }
 .chip:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+/* Sets the two table chips apart from each other and from the categories. */
+.chip-sep { flex: none; align-self: center; width: 1px; height: 14px; margin: 0 3px; background: rgba(43, 38, 32, 0.18); }
 
 .credit {
   position: absolute; bottom: 14px; right: 18px; font: 400 11px/1 var(--sans); color: var(--muted);
