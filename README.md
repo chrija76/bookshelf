@@ -1,6 +1,6 @@
 # Bookshelf
 
-> This README was written entirely by [Claude](https://claude.com/claude-code).
+> This repo (code, README and prompt) was written entirely by [Claude](https://claude.com/claude-code).
 
 Your Goodreads library as a 3D room: a walnut bookcase, a low table with every want-to-read book in stacks, and a small table with the books being read lying open. Every book is sized from its page count and binding and gets a generated spine in its cover colours.
 
