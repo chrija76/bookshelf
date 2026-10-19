@@ -52,7 +52,7 @@ function DevProbe({ layout }: { layout: Layout }) {
     const w = window as unknown as {
       __bookPos?: (id: string) => { x: number; y: number } | null;
       __centreBook?: () => string | null;
-      __lookAt?: (id: string) => void;
+      __lookAt?: (id: string, dx?: number, distance?: number) => void;
       __stars?: () => void;
       __frame?: (x: number, y: number, d: number) => void;
       __project?: (x: number, y: number, z: number) => { x: number; y: number };
@@ -86,12 +86,12 @@ function DevProbe({ layout }: { layout: Layout }) {
       return p ? screen(p) : null;
     };
     // Move the camera so a book is in the middle of the screen.
-    w.__lookAt = (id) => {
+    w.__lookAt = (id, dx = 0, distance = 2300) => {
       const p = layout.placements.find((pl) => pl.book.id === id);
       if (!p) return;
       const st = useStore.getState();
-      st.setDistance(2300);
-      st.setTargetX(p.position[0]);
+      st.setDistance(distance);
+      st.setTargetX(p.position[0] + dx);
       st.setTargetY(p.position[1]);
     };
     // The upright book nearest the middle of the screen.

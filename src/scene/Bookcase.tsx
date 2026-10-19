@@ -284,9 +284,71 @@ function DecorItem({ item, mats }: { item: Decor; mats: Mats }) {
 const WARM = '#ffe2b8';
 
 /**
+ * A spotlight beam in slightly hazy air: an open cone from the spot to where the light lands.
+ * Brightest where the cone is seen edge-on to its axis, fading towards its foot.
+ */
+function beamMaterial(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color(WARM) }, uOpacity: { value: 0 } },
+    vertexShader: `
+      varying vec3 vN;
+      varying vec3 vView;
+      varying float vAlong;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vN = normalize(normalMatrix * normal);
+        vView = normalize(-mv.xyz);
+        vAlong = 1.0 - uv.y;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform vec3 uColor;
+      uniform float uOpacity;
+      varying vec3 vN;
+      varying vec3 vView;
+      varying float vAlong;
+      void main() {
+        float facing = pow(abs(dot(normalize(vN), normalize(vView))), 1.6);
+        // Fades in below the spot and out before its foot, so neither end shows an edge.
+        float fall = smoothstep(0.0, 0.08, vAlong) * (1.0 - smoothstep(0.45, 1.0, vAlong));
+        gl_FragColor = vec4(uColor * facing * fall * uOpacity, 1.0);
+      }`,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+}
+
+/** Where a five-star spot hangs and what its beam lights: the top edge of the leaning cover. */
+function spotFor(p: Layout['placements'][number], c: CaseSpec) {
+  const row = Number(p.row!.split(':')[1]);
+  const top = compY(c, row) + c.compH;
+  const { h, t } = p.book.dims;
+  const lean = -p.rotation[0];
+  const [x, y, z] = p.position;
+  // Front edge of the cover's head, which leans back from the book's centre.
+  const headY = y + (h / 2) * Math.cos(lean) + (t / 2) * Math.sin(lean);
+  const headZ = z - (h / 2) * Math.sin(lean) + (t / 2) * Math.cos(lean);
+  // The spot sits a little in front of that edge, so it shines down onto the cover.
+  const spot = new THREE.Vector3(x, top - 8, Math.min(c.depth - 30, headZ + 26));
+  const target = new THREE.Vector3(x, headY - 6, headZ + 4);
+  const axis = target.clone().sub(spot);
+  const length = axis.length();
+  const beam = {
+    position: spot.clone().addScaledVector(axis, 0.5),
+    quaternion: new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), axis.normalize()),
+    length,
+    radius: Math.min(p.book.dims.w * 0.4, 18 + length * 0.75),
+  };
+  return { top, spot, beam, headY };
+}
+
+/**
  * Display lighting for the covers view: a slim aluminium LED profile under the front of every
  * shelf with its wash on the back panel, and for each five-star book a small spot in the shelf
- * above throwing a cone of light behind it. The light on the books themselves is in their shader.
+ * above. Its beam runs from the spot to the head of the cover, with a soft spill on the panel
+ * behind. The light on the books themselves is in their shader.
  */
 function ShelfLighting({ layout, mats }: { layout: Layout; mats: Mats }) {
   const c = layout.bookcase;
@@ -296,15 +358,16 @@ function ShelfLighting({ layout, mats }: { layout: Layout; mats: Mats }) {
       led: new THREE.MeshStandardMaterial({ color: '#e9e5de', emissive: '#fff6e8', roughness: 0.6 }),
       spotLed: new THREE.MeshStandardMaterial({ color: '#e9e5de', emissive: '#fff6e8', roughness: 0.6, emissiveIntensity: 0 }),
       wash: new THREE.MeshBasicMaterial({
-        map: lightWashTexture(false),
+        map: lightWashTexture('wash'),
         color: WARM,
         transparent: true,
         opacity: 0.2,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
-      cone: new THREE.MeshBasicMaterial({
-        map: lightWashTexture(true),
+      beam: beamMaterial(),
+      spill: new THREE.MeshBasicMaterial({
+        map: lightWashTexture('spill'),
         color: WARM,
         transparent: true,
         opacity: 0,
@@ -315,15 +378,16 @@ function ShelfLighting({ layout, mats }: { layout: Layout; mats: Mats }) {
     }),
     [],
   );
-  // The five-star switch: strips and their wash fade out, the spots and their cones fade in.
+  // The five-star switch: strips and their wash fade out, the spots and their beams fade in.
   useFrame(() => {
     const a = starFx.amount;
     lm.led.emissiveIntensity = 1 - a;
     lm.spotLed.emissiveIntensity = a;
     lm.wash.opacity = 0.2 * (1 - a);
-    lm.cone.opacity = 0.42 * a;
+    lm.beam.uniforms.uOpacity!.value = 0.38 * a;
+    lm.spill.opacity = 0.3 * a;
     lm.wash.visible = a < 0.999;
-    lm.cone.visible = a > 0.001;
+    lm.beam.visible = lm.spill.visible = a > 0.001;
   });
   const stars = layout.placements.filter((p) => p.kind === 'face' && p.book.rating === 5 && p.row);
   return (
@@ -349,19 +413,22 @@ function ShelfLighting({ layout, mats }: { layout: Layout; mats: Mats }) {
         );
       })}
       {stars.map((p) => {
-        const row = Number(p.row!.split(':')[1]);
-        const top = compY(c, row) + c.compH;
+        const { top, spot, beam, headY } = spotFor(p, c);
         const x = p.position[0];
         const w = p.book.dims.w;
         return (
           <group key={p.book.id}>
-            <mesh material={lm.puck} position={[x, top - 4, c.depth - 62]}>
+            <mesh material={lm.puck} position={[x, top - 4, spot.z]}>
               <cylinderGeometry args={[17, 17, 8, 32]} />
             </mesh>
-            <mesh material={lm.spotLed} position={[x, top - 8.1, c.depth - 62]} rotation-x={Math.PI / 2}>
+            <mesh material={lm.spotLed} position={[x, top - 8.1, spot.z]} rotation-x={Math.PI / 2}>
               <circleGeometry args={[11, 32]} />
             </mesh>
-            <mesh material={lm.cone} position={[x, top - c.compH / 2, 11.5]} scale={[w * 1.9, c.compH, 1]}>
+            <mesh material={lm.beam} position={beam.position} quaternion={beam.quaternion}>
+              <cylinderGeometry args={[9, beam.radius, beam.length, 40, 1, true]} />
+            </mesh>
+            {/* Light spilling past the book onto the back panel, centred on its head. */}
+            <mesh material={lm.spill} position={[x, headY - 20, 11.5]} scale={[w * 1.5, (top - headY) * 2 + 160, 1]}>
               <planeGeometry />
             </mesh>
           </group>

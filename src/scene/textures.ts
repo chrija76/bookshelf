@@ -319,7 +319,7 @@ export function compartmentAOTexture(): THREE.CanvasTexture {
  * an LED strip along the top, even across and fading down. `cone` true: a spot's pool, a soft
  * beam widening downwards from a point at the top centre.
  */
-export function lightWashTexture(cone: boolean): THREE.CanvasTexture {
+export function lightWashTexture(kind: 'wash' | 'spill'): THREE.CanvasTexture {
   const W = 128;
   const H = 128;
   const [c, ctx] = canvas(W, H);
@@ -329,10 +329,12 @@ export function lightWashTexture(cone: boolean): THREE.CanvasTexture {
       const v = y / (H - 1); // 0 at the top
       const u = (x / (W - 1)) * 2 - 1; // -1..1 across
       let a: number;
-      if (cone) {
-        const half = 0.18 + 0.8 * v; // the beam widens as it falls
-        const across = Math.max(0, 1 - Math.pow(Math.abs(u) / half, 2));
-        a = across * Math.pow(1 - v, 0.9) * (0.55 + 0.45 * Math.exp(-v * 6));
+      if (kind === 'spill') {
+        // Soft oval of light spilling past a spot onto the panel behind it, brightest up top.
+        // Fades to nothing at every edge of the quad, so no outline ever shows.
+        const d = Math.hypot(u, (v - 0.32) / 0.75);
+        const edge = Math.pow(1 - u * u, 2) * Math.sin(Math.PI * Math.min(1, v * 1.15));
+        a = Math.exp(-d * d * 2.6) * Math.max(0, edge);
       } else {
         const sides = Math.min(1, (1 - Math.abs(u)) * 7);
         a = sides * (0.18 + 0.82 * Math.exp(-v * 3.2)) * (1 - v * 0.6);
